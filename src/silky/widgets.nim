@@ -704,8 +704,12 @@ template dropDown*[T](selected: var T, options: openArray[T]) =
 
     let
       rowHeight = height
-      popupPos = vec2(dropRect.x, dropRect.y + dropRect.h)
-      popupSize = vec2(width, rowHeight * options.len.float32)
+      popupSize = vec2(min(width, sk.rootSize.x), rowHeight * options.len.float32)
+      below = dropRect.y + dropRect.h
+      popupY = if below + popupSize.y <= sk.rootSize.y: below
+        else: dropRect.y - popupSize.y
+      popupPos = clamp(vec2(dropRect.x, popupY), vec2(0),
+        max(sk.rootSize - popupSize, vec2(0)))
       popupRect = rect(popupPos, popupSize)
 
     sk.pushLayout(popupPos, popupSize)
@@ -714,7 +718,7 @@ template dropDown*[T](selected: var T, options: openArray[T]) =
     for i, opt in options:
       let
         rowPos = vec2(sk.pos.x, sk.pos.y + i.float32 * rowHeight)
-        rowRect = rect(rowPos, vec2(width, rowHeight))
+        rowRect = rect(rowPos, vec2(popupSize.x, rowHeight))
         textPos = rowPos + vec2(sk.theme.padding)
         isSelected = selected == opt
         interaction = sk.interact(rowRect, true)
